@@ -18,7 +18,7 @@ dotenv.config()
 
 //middlewares
 app.use(cors({
-    origin: ["http://localhost:5173", "https://carrermate.netlify.app"],
+    origin: "http://localhost:5173",
     methods: ["GET", "POST", "DELETE", "PUT"],
     credentials: true
 }));
