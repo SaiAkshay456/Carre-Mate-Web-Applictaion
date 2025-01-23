@@ -2,7 +2,9 @@ import mongoose from "mongoose";
 
 export const connectToDb = async () => {
     try {
-        await mongoose.connect(process.env.MONGO_URL)
+        await mongoose.connect(process.env.MONGO_URL, {
+            dbName: "CAREER_MATE"
+        })
         console.log("connected to mongodb");
     }
     catch (err) {
