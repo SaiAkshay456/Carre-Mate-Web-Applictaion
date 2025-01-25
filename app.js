@@ -47,7 +47,6 @@ app.use("/api/v1/job", jobRoute);
 app.use("/api/v1/application", applicationRoute);
 
 
-
 app.use(errorMiddleware);
 
 export default app;
