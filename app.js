@@ -20,7 +20,7 @@ dotenv.config()
 app.use(cors({
     origin: [
         "http://localhost:5173", // Local frontend
-        // "https://careermate-app.netlify.app" // Deployed frontend
+        "https://careermateapp.netlify.app/register"// Deployed frontend
     ],
     methods: ["GET", "POST", "DELETE", "PUT"],
     credentials: true,
