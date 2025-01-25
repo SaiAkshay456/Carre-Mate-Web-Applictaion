@@ -18,9 +18,8 @@ dotenv.config()
 
 //middlewares
 app.use(cors({
-    origin: [
-        "http://localhost:5173", // Local frontend
-        "https://careermateapp.netlify.app/register"// Deployed frontend
+    origin: [ // Local frontend
+        "https://careermateapp.netlify.app"// Deployed frontend
     ],
     methods: ["GET", "POST", "DELETE", "PUT"],
     credentials: true,
