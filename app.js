@@ -18,9 +18,12 @@ dotenv.config()
 
 //middlewares
 app.use(cors({
-    origin: [process.env.FRONTEND_URL, "https://careermate-app.netlify.app"],
+    origin: [
+        "http://localhost:5173", // Local frontend
+        "https://careermate-app.netlify.app" // Deployed frontend
+    ],
     methods: ["GET", "POST", "DELETE", "PUT"],
-    credentials: true
+    credentials: true,
 }));
 // app.use(cors());
 app.use(cookieParser());
