@@ -18,11 +18,13 @@ export const searchJobs = catchAsyncError(async (req, res, next) => {
             { companyName: { $regex: query, $options: "i" } },
             { location: { $regex: query, $options: "i" } },
             { description: { $regex: query, $options: "i" } },
-            { salaryTo: { $regex: query, $options: "i" } },
-            { salaryFrom: { $regex: query, $options: "i" } },
-            { fixedSalary: { $regex: query, $options: "i" } },
+            { category: { $regex: query, $options: "i" } },
         ]
-    }).sort({ createdAt: -1 });
+    })
+        .select('title companyName location description category createdAt') // Select only the necessary fields
+        .sort({ createdAt: -1 })  // Sorting by created date
+        .limit(20);  // Optional: Limit the number of results returned for better performance
+
 
     if (!jobs) {
         return next(new Errorhandler("No Jobs found with keyword", 208));

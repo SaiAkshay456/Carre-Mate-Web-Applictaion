@@ -17,7 +17,7 @@ const jobSchema = new mongoose.Schema({
     description: {
         type: String,
         required: [true, "description is required field"],
-        maxLength: [300, "Maximum 300 words"]
+        maxLength: [1000, "Maximum 300 words"]
     },
     category: {
         type: String,

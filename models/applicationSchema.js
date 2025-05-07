@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 import validator from "validator"
 
 const applicationSchema = new mongoose.Schema({
+    jobId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "jobModel",
+        required: true
+    },
     name: {
         type: String,
         required: [true, "Name is must required"],
@@ -22,7 +27,6 @@ const applicationSchema = new mongoose.Schema({
     },
     coverLetter: {
         type: String,
-        required: ["true", "please provide letter"]
     },
     address: {
         type: String,
@@ -68,3 +72,5 @@ const applicationSchema = new mongoose.Schema({
 })
 
 export const applicationModel = mongoose.model("application", applicationSchema)
+
+// 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=openrouterkey

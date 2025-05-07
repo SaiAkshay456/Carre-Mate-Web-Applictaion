@@ -9,10 +9,6 @@ export const isAuthorized = catchAsyncError(async (req, res, next) => {
         return next(new Errorhandler("Token not found", 400));
     }
     const decode = jwt.verify(token, process.env.JWT_SECRET_KEY);
-    console.log(decode);
-
-    req.user = await User.findById(decode.id)
-
+    req.user = await User.findById(decode.id);
     next();
-
 })

@@ -11,12 +11,12 @@ export const register = catchAsyncError(async (req, res, next) => {
     if (!firstName || !email || !role || !password) {
         return next(new Errorhandler("please fill your details", 401));
     }
-
     const isEmail = await User.findOne({ email });
 
     if (isEmail) {
         return next(new Errorhandler(`${email} already exsists`, 402));
     }
+
     const user = await User.create({ firstName, lastName, email, role, password });
     console.log(user);
     sendToken(user, 200, res, "user registered");
@@ -51,13 +51,12 @@ export const login = catchAsyncError(async (req, res, next) => {
 })
 
 //logout user
-
 export const logout = catchAsyncError(async (req, res, next) => {
     res.status(201).cookie("token", "", {
         expires: new Date(Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000),
         httpOnly: true,
-        secure: true,
-        sameSite: "None"
+        //secure:true
+        // sameSite: "None"
     }).json({
         success: true,
         message: "logged out successfully!",
