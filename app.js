@@ -25,7 +25,7 @@ dotenv.config()
 // Local frontend
 // "https://careermateapp.netlify.app"// Deployed frontend
 app.use(cors({
-    origin: "https://careermateai.netlify.app/",
+    origin: ["https://careermateai.netlify.app", "https://careermateai.netlify.app/"],
     methods: ["GET", "POST", "DELETE", "PUT"],
     credentials: true,
 }));
