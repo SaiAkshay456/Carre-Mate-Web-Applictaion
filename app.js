@@ -11,6 +11,7 @@ import jobRoute from "./routes/jobRoute.js"
 import applicationRoute from "./routes/applicationRoute.js"
 import interviewRoute from "./routes/interviewRoute.js"
 import path from "path";
+import { fileURLToPath } from "url";
 
 
 const app = express();
@@ -53,6 +54,18 @@ app.use("/api/v1/interview", interviewRoute);
 // app.get("*", (req, res) => {
 //     res.sendFile(path.join(frontendPath, "index.html"));
 // });
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const frontendPath = path.resolve(__dirname, "../frontend/dist");
+
+if (process.env.NODE_ENV === "production") {
+    app.use(express.static(frontendPath));
+
+    app.get("*", (req, res) => {
+        res.sendFile(path.join(frontendPath, "index.html"));
+    });
+}
 
 app.use(errorMiddleware);
 
