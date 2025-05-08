@@ -343,20 +343,24 @@ like below
     let rating = feedbackObj?.feedback?.rating;
     let summary = feedbackObj?.feedback?.summary;
     let Recommendation = feedbackObj?.feedback?.Recommendation;
-    console.log(rating)
+    console.log(rating.communication)
+    console.log(rating.experience)
+    console.log(rating.problemSolving)
+    console.log(rating.technicalSkills)
     console.log(summary)
     console.log(Recommendation)
     let considered = Recommendation
     const feedbacks = await feedBackModel.create({
         userName, userEmail, interview_id, feedback: rating, considered
     })
+    console.log("356", feedbacks);
     if (!feedbacks) {
         return next(new Errorhandler("could,nt save into database", 400))
     }
     res.status(200).json({
         success: true,
         message: "feedback provided!!",
-        feedbackData: completion?.choices?.[0]?.message?.content,
+        feedbackData: feedbacks,
         summary
     })
 })
