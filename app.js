@@ -11,6 +11,7 @@ import jobRoute from "./routes/jobRoute.js"
 import applicationRoute from "./routes/applicationRoute.js"
 import interviewRoute from "./routes/interviewRoute.js"
 import path from "path";
+import userfeedbackRoute from "./routes/userFeedbackRoute.js";
 import { fileURLToPath } from "url";
 
 
@@ -25,7 +26,7 @@ dotenv.config()
 // Local frontend
 // "https://careermateapp.netlify.app"// Deployed frontend
 app.use(cors({
-    origin: ["https://careermateai.netlify.app", "https://careermateai.netlify.app/"],
+    origin: "https://careermate-ai.netlify.app",/* ["http://localhost:5173", "http://localhost:5173/"],*/
     methods: ["GET", "POST", "DELETE", "PUT"],
     credentials: true,
 }));
@@ -46,6 +47,7 @@ app.use("/api/v1/user", userRoute);
 app.use("/api/v1/job", jobRoute);
 app.use("/api/v1/application", applicationRoute);
 app.use("/api/v1/interview", interviewRoute);
+app.use("/api/v1/userfeedback", userfeedbackRoute)
 
 // const frontendPath = path.resolve(__dirname, "../frontend/dist"); // Adjust based on your build location
 // app.use(express.static(frontendPath));

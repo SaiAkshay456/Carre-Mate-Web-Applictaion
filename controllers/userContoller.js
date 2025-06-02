@@ -53,10 +53,10 @@ export const login = catchAsyncError(async (req, res, next) => {
 //logout user
 export const logout = catchAsyncError(async (req, res, next) => {
     res.status(201).cookie("token", null, {
-        expires: new Date(Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000),
+        expires: new Date(Date.now()),
         httpOnly: true,
-        secure: true,
-        sameSite: "None"
+        // secure: true, for deploy
+        // sameSite: "None"
     }).json({
         success: true,
         message: "logged out successfully!",

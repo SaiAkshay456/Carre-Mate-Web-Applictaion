@@ -91,10 +91,10 @@ export const generateQuestions = catchAsyncError(async (req, res, next) => {
         return next(new Errorhandler(`${role} cannot access this resource`, 403));
     }
 
-    const { duration, interviewType, email, jobId } = req.body;
+    const { duration, interviewType, email, jobId, amount } = req.body;
 
     // Validate required fields
-    if (!email || !duration || !interviewType || !jobId) {
+    if (!email || !duration || !interviewType || !jobId || !amount) {
         return next(new Errorhandler("Please fill all required details", 400));
     }
 
@@ -125,6 +125,7 @@ Generate a set of structured interview questions based on the following candidat
 - Job Description: ${jobDescription}
 - Interview Types: ${interviewType}
 - Total Interview Duration: ${duration} minutes
+- Toatl Interview Questions to generate : ${amount}
 
 Please return the questions as a JSON array in the following format:
 
@@ -214,12 +215,12 @@ export const postInterview = catchAsyncError(async (req, res, next) => {
         return next(new Errorhandler(`${role} can,t access source`, 300))
     }
 
-    const { email, duration, interviewType, jobId, questionList, interviewId } = req.body
-    if (!email || !duration || !interviewType || !jobId || !questionList || !interviewId) {
+    const { email, duration, interviewType, jobId, questionList, interviewId, amount } = req.body
+    if (!email || !duration || !interviewType || !jobId || !questionList || !interviewId || !amount) {
         return next(new Errorhandler("fill the details", 300));
     }
 
-    const interview = await interviewModel.create({ email, duration, interviewType, jobId, questionList, interviewId });
+    const interview = await interviewModel.create({ email, duration, interviewType, jobId, questionList, amount, interviewId });
     if (!interview) {
         return next(new Errorhandler("failed to create interview", 300));
     }
@@ -230,6 +231,48 @@ export const postInterview = catchAsyncError(async (req, res, next) => {
 
 })
 
+
+const parseFeedback = (data) => {
+    // 1. First ensure we have a string
+    if (typeof data !== 'string') {
+        console.error('Expected string data but got:', typeof data);
+        return null;
+    }
+
+    // 2. Clean the string to handle common AI response issues
+    const cleanedData = data
+        .replace(/```json/g, '')  // Remove Markdown code block markers
+        .replace(/```/g, '')      // Remove any remaining backticks
+        .trim();                  // Trim whitespace
+
+    // 3. Attempt JSON parsing with error handling
+    try {
+        const feedbackObj = JSON.parse(cleanedData);
+
+        // 4. Validate the basic structure
+        if (!feedbackObj?.feedback) {
+            throw new Error('Invalid feedback structure - missing "feedback" property');
+        }
+
+        return feedbackObj;
+
+    } catch (error) {
+        console.error('Failed to parse feedback:', error);
+        console.debug('Original content:', data);
+
+        // 5. Fallback: Try to extract JSON from malformed response
+        try {
+            const jsonMatch = data.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                return JSON.parse(jsonMatch[0]);
+            }
+        } catch (fallbackError) {
+            console.error('Fallback parsing also failed:', fallbackError);
+        }
+
+        return null;
+    }
+};
 
 
 export const getInterviewDetails = catchAsyncError(async (req, res, next) => {
@@ -253,116 +296,123 @@ export const getInterviewDetails = catchAsyncError(async (req, res, next) => {
 
 })
 
-
 export const generateInterviewFeedback = catchAsyncError(async (req, res, next) => {
 
-    const { conversation, userName, userEmail, interview_id } = req.body;
+    const { conversation, userName, userEmail, interviewId, interviewType, jobPosition } = req.body;
     console.log(conversation);
 
     if (!conversation) {
         return next(new Errorhandler("conversation not found", 300))
     }
-    if (!userName || !userEmail || !interview_id) {
+    if (!userName || !userEmail || !interviewId) {
         return next(new Errorhandler("details are incomplete", 300))
     }
+    console.log(conversation);
+    const FEEDBACK_PROMPT = `Generate comprehensive interview feedback in JSON format based on the following candidate evaluation. Follow these guidelines strictly:
 
-    const FEEDBACK_PROMPT = `here is the conversation :${conversation}
-
-Analyze the following interview conversation between an AI interviewer (role: assistant) and a candidate (role: user). Based on the candidate's answers to the interviewer's questions, evaluate and give a score out of 10 in the following four areas:
-
-Technical Skills (knowledge and correctness of technical content)
-
-Communication (clarity and articulation)
-
-Problem-Solving (how well they approach or attempt answering questions)
-
-Behavioral (professionalism, enthusiasm, attitude)
-
-Finally, provide a brief summary paragraph explaining the candidate's overall performance.
-give output in JSON format below:
-
-for example:
-like below 
+1. STRUCTURE:
 {
-
-    feedback:{
-
-        rating:{
-
-            techicalSkills:5,
-
-            communication:6,
-
-            problemSolving:4,
-
-            experince:7
-
-        },
-
-        summery:<in 3 Line>,
-        Recommendation:'', provide boolean hire or not
-
-        RecommendationMsg:''
-
-    }
-
+  "feedback": {
+    "ratings": {
+      "technical": 0-10,  // Technical competency for role
+      "problemSolving": 0-10,  // Approach to challenges
+      "communication": 0-10,  // Clarity and articulation
+      "experience": 0-10,  // Alignment with company values
+    },
+    "verdict": "hire/no-hire/strong hire",
+    "highlights": {
+      "strengths": ["array", "of", "3-4", "key strengths"],
+      "concerns": ["array", "of", "2-3", "improvement areas"]
+    },
+    "detailedAnalysis": {
+      "technical": "paragraph with specific examples",
+      "problemSolving": "paragraph with specific examples", 
+      "communication": "paragraph with specific examples",
+      "experience": "paragraph with specific examples"
+    },
+    "recommendations": {
+      "roleSuitability": "specific position if different",
+      "onboardingFocus": ["key", "areas", "for", "ramp-up"],
+      "growthPotential": "1-2 sentences on trajectory"
+    },
+    "summary":"based on over all interview"
+  }
 }
 
-`
+2. RATING SCALE:
+10 = World-class, 9 = Exceptional, 8 = Strong, 7 = Good, 6 = Satisfactory, 
+5 = Needs improvement, 4 = Significant gaps, 3 = Poor
+
+3. INPUT CONTEXT:
+- Candidate Name:${userName}
+- Position:${jobPosition}
+- Interview Type: ${interviewType}
+- Interview Transcript :${conversation}
+4. REQUIREMENTS:
+- Be brutally honest but professional
+- Cite specific examples from interview
+- Differentiate between hard skills and potential
+- Flag any red flags clearly
+- Suggest alternative roles if mismatched
+- Use concise, actionable language
+- Maintain consistent rating logic
+
+5. OUTPUT NOTES:
+- Omit null/empty fields
+- Escape special characters
+- Ensure valid JSON`
+
     let FINAL_PROMPT = FEEDBACK_PROMPT
-
-
     const openai = new OpenAI({
         baseURL: "https://openrouter.ai/api/v1",
         apiKey: process.env.API_REF_KEY,
         timeout: 30000 // 30 seconds timeout
     });
-
+    //deepseek/deepseek-prover-v2:free
+    // google/gemini-2.5-flash-preview-05-20
+    // google/gemma-3n-e4b-it:free
     const completion = await openai.chat.completions.create({
-        model: "qwen/qwen3-4b:free",
+        model: "google/gemini-2.5-flash-preview-05-20",
         messages: [
             { role: "user", content: FINAL_PROMPT }
         ],
         temperature: 0.7,
     });
 
-    let data = completion?.choices?.[0]?.message?.content;
-
     // Safely try to parse the JSON string into an object
-    let feedbackObj;
+    let data = completion?.choices?.[0]?.message?.content;
+    console.log('Raw API response:', typeof data, data);
 
-    try {
-        feedbackObj = JSON.parse(data);
-        console.log("Parsed object:", feedbackObj);
-        // Now you can process feedbackObj like a normal object
-        console.log("Technical Skills Score:", feedbackObj.feedback.rating.technicalSkills);
-    } catch (error) {
-        console.error("Failed to parse data:", error);
-    }
+    let feedbackObj = parseFeedback(data);
+    console.log('Parsed feedback object:', feedbackObj);
 
-    let rating = feedbackObj?.feedback?.rating;
-    let summary = feedbackObj?.feedback?.summary;
-    let Recommendation = feedbackObj?.feedback?.Recommendation;
-    console.log(rating.communication)
-    console.log(rating.experience)
-    console.log(rating.problemSolving)
-    console.log(rating.technicalSkills)
-    console.log(summary)
-    console.log(Recommendation)
-    let considered = Recommendation
+    const feedback = feedbackObj.feedback;
+    const { technical, problemSolving, communication, experience } = feedback.ratings;
+    const verdict = feedback.verdict;
+    const summary = feedback.summary;
+    console.log(technical)
+    console.log(problemSolving)
+    console.log(communication)
+    console.log(experience)
+
     const feedbacks = await feedBackModel.create({
-        userName, userEmail, interview_id, feedback: rating, considered
-    })
-    console.log("356", feedbacks);
-    if (!feedbacks) {
-        return next(new Errorhandler("could,nt save into database", 400))
-    }
+        userName,
+        userEmail,
+        interview_id: interviewId,
+        rating: {
+            technicalSkills: technical,
+            communication: communication,
+            problemSolving: problemSolving,
+            experience: experience,
+        },
+        considered: verdict,
+        summary
+    });
     res.status(200).json({
         success: true,
         message: "feedback provided!!",
         feedbackData: feedbacks,
-        summary
-    })
+    });
 })
 
 
@@ -418,10 +468,12 @@ export const getAllInterviewFeedbacks = catchAsyncError(async (req, res, next) =
     if (!feedbacksAll) {
         return next(new Errorhandler("error fetchin feedback", 302))
     }
+    const lenOfFeed = feedbacksAll.length
     res.status(200).json({
         success: true,
         message: "success",
-        feedbacksAll
+        feedbacksAll,
+        lenOfFeed
     })
 })
 
@@ -434,7 +486,8 @@ export const getFeedback = catchAsyncError(async (req, res, next) => {
         return next(new Errorhandler(`${role} can,t access this source`, 300))
     }
 
-    const feed = await feedBackModel.findById(id);
+    const feed = await feedBackModel.findById({ interview_id: id });
+    console.log(feed)
 
     if (!feed) {
         return next(new Errorhandler("error at database fetch", 400))

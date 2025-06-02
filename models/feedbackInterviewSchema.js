@@ -17,8 +17,8 @@ const feedbackSchema = new mongoose.Schema({
         trim: true,
         validate: validator.isEmail,
     },
-    feedback: {
-        techicalSkills: {
+    rating: {
+        technicalSkills: {
             type: Number
         },
         communication: {
@@ -27,14 +27,18 @@ const feedbackSchema = new mongoose.Schema({
         problemSolving: {
             type: Number
         },
-        experince: {
+        experience: {
             type: Number
         }
     },
     considered: {
-        type: Boolean,
+        type: String,
         required: true
-    }
+    },
+    summary: {
+        type: String,
+        required: true
+    },
 }, { timestamps: true })
 
 const feedBackModel = mongoose.model("feedBackModel", feedbackSchema);

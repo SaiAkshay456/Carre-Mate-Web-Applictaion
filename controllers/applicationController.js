@@ -180,34 +180,45 @@ export const postApplication = catchAsyncError(async (req, res, next) => {
     const keywordScore = intersection.length / jdKeywords.size;
     const finalScore = (score * 0.7 + keywordScore * 0.3) * 100; // percentage
     console.log(finalScore)
-    const applicationData = {
-        name,
-        email,
-        phone,
-        address,
-        resume: {
-            public_id: result.public_id,
-            url: result.secure_url
-        },
-        employerId,
-        applicantId,
-        jobId
-    };
+    let applicationData;
+    let application;
+    if (finalScore > 70) {
+        applicationData = {
+            name,
+            email,
+            phone,
+            address,
+            resume: {
+                public_id: result.public_id,
+                url: result.secure_url
+            },
+            employerId,
+            applicantId,
+            jobId
+        };
 
-    if (coverLetter) {
-        applicationData.coverLetter = coverLetter;
+        if (coverLetter) {
+            applicationData.coverLetter = coverLetter;
+        }
+
+        application = await applicationModel.create(applicationData);
+        if (!application) {
+            return next(new Errorhandler("Error submitting application", 300));
+        }
+        res.status(200).json({
+            success: true,
+            message: "Application submitted successfully",
+            application: application || null,
+            finalScore
+        });
     }
-
-    const application = await applicationModel.create(applicationData);
-    if (!application) {
-        return next(new Errorhandler("Error submitting application", 300));
+    else {
+        res.status(200).json({
+            success: true,
+            message: "Application not successfully",
+            application: application || null,
+            finalScore
+        });
     }
-
-    res.status(200).json({
-        success: true,
-        message: "Application submitted successfully",
-        application,
-        finalScore
-    });
 });
 

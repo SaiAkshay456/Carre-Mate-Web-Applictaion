@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import interviewModel from "./interviewSchema.model.js";
 
 const jobSchema = new mongoose.Schema({
     companyName: {
@@ -65,5 +66,19 @@ const jobSchema = new mongoose.Schema({
 })
 
 const jobModel = mongoose.model("jobModel", jobSchema);
+
+
+jobSchema.pre('findOneAndDelete', async function (next) {
+    try {
+        const job = await this.model.findOne(this.getQuery());
+        if (job) {
+            await interviewModel.deleteMany({ jobId: job._id });
+        }
+        next();
+    } catch (error) {
+        next(error);
+    }
+});
+
 
 export default jobModel;
